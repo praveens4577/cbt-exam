@@ -1,0 +1,134 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+<title>CBT Exam System</title>
+<style>
+body{font-family:Arial;background:#eef2f7;text-align:center}
+.box{background:white;width:70%;margin:auto;padding:20px;border-radius:12px}
+button{padding:10px 18px;margin:10px;font-size:16px;cursor:pointer}
+.palette button{width:40px;height:40px;margin:4px;border:none;color:white}
+.timer{font-size:22px;color:red;font-weight:bold}
+.hidden{display:none}
+</style>
+</head>
+<body>
+
+<div class="box" id="loginBox">
+<h2>Exam Login</h2>
+<input id="name" placeholder="Enter Name"><br><br>
+<button onclick="startExam()">Start Exam</button>
+</div>
+
+<div class="box hidden" id="examBox">
+<h2>Mock CBT Exam</h2>
+<div class="timer">Time Left: <span id="time">120</span>s</div>
+
+<h3 id="question"></h3>
+<div id="options"></div>
+
+<button onclick="prevQ()">Previous</button>
+<button onclick="nextQ()">Next</button>
+
+<h3>Question Palette</h3>
+<div class="palette" id="palette"></div>
+
+<button onclick="submitExam()">Submit Exam</button>
+</div>
+
+<div class="box hidden" id="resultBox">
+<h2>Result</h2>
+<h3 id="score"></h3>
+<h3 id="percent"></h3>
+<div id="review"></div>
+</div>
+
+<script>
+let questions=[
+{q:"Capital of India?",options:["Chennai","Delhi","Mumbai","Kolkata"],ans:1},
+{q:"5 × 3 = ?",options:["15","10","20","8"],ans:0},
+{q:"Sun rises in?",options:["West","East","North","South"],ans:1},
+{q:"HTML stands for?",options:["Hyper Trainer","Hyper Text Markup Language","High Text","None"],ans:1},
+{q:"Largest planet?",options:["Earth","Mars","Jupiter","Venus"],ans:2}
+];
+
+questions.sort(()=>Math.random()-0.5);
+
+let current=0;
+let answers=new Array(questions.length).fill(null);
+
+function startExam(){
+let n=document.getElementById("name").value;
+if(n==""){alert("Enter name");return;}
+document.getElementById("loginBox").classList.add("hidden");
+document.getElementById("examBox").classList.remove("hidden");
+document.documentElement.requestFullscreen();
+loadQ();
+startTimer();
+}
+
+function loadQ(){
+let q=questions[current];
+document.getElementById("question").innerText=(current+1)+". "+q.q;
+
+let html="";
+q.options.forEach((opt,i)=>{
+html+=`
+<label>
+<input type="radio" name="opt"
+${answers[current]==i?"checked":""}
+onclick="answers[${current}]=${i};palette();">
+${opt}
+</label><br>`;
+});
+document.getElementById("options").innerHTML=html;
+palette();
+}
+
+function nextQ(){if(current<questions.length-1){current++;loadQ();}}
+function prevQ(){if(current>0){current--;loadQ();}}
+
+function palette(){
+let html="";
+questions.forEach((q,i)=>{
+let color=answers[i]==null?"gray":"green";
+html+=`<button style="background:${color}" onclick="go(${i})">${i+1}</button>`;
+});
+document.getElementById("palette").innerHTML=html;
+}
+function go(i){current=i;loadQ();}
+
+let time=120;
+function startTimer(){
+let t=setInterval(()=>{
+time--;
+document.getElementById("time").innerText=time;
+if(time<=0){clearInterval(t);submitExam();}
+},1000);
+}
+
+function submitExam(){
+document.getElementById("examBox").classList.add("hidden");
+document.getElementById("resultBox").classList.remove("hidden");
+
+let score=0;
+let review="";
+
+questions.forEach((q,i)=>{
+if(answers[i]==q.ans) score++;
+else if(answers[i]!=null) score-=0.25;
+
+review+=`Q${i+1}: Correct Answer → ${q.options[q.ans]}<br>`;
+});
+
+let percent=((score/questions.length)*100).toFixed(2);
+
+document.getElementById("score").innerText="Score: "+score;
+document.getElementById("percent").innerText="Percentage: "+percent+"%";
+document.getElementById("review").innerHTML=review;
+
+document.exitFullscreen();
+}
+</script>
+</body>
+</html>
